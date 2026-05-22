@@ -1,0 +1,1 @@
+# Staphylococcus shinii Nanopore Pipeline
