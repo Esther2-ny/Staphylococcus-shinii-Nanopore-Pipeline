@@ -1,0 +1,33 @@
+#!/bin/bash
+
+# ==============================================================================
+# Staphylococcus shinii Nanopore Sequencing & Assembly Pipeline
+# Sample: Barcode02
+# ==============================================================================
+
+echo " Starting Nanopore Analysis Pipeline for Barcode02..."
+
+# 1. Consolidate Raw Files
+echo " Merging raw split FASTQ files..."
+cat *0.fastq.gz *1.fastq.gz > barcode02_final.fastq.gz
+
+# 2. Read Pre-Processing & Adapter Trimming
+echo " Running Porechop adapter removal..."
+# Note: Requires 'trimming' conda environment activated
+porechop -i barcode02_final.fastq.gz -o barcode02_trimmed.fastq.gz
+
+# 3. De Novo Genome Assembly
+echo " Running Flye structural assembler..."
+# Note: Requires 'assembly' conda environment activated
+flye --nano-raw barcode02_trimmed.fastq.gz --out-dir flye_output_bc02 --threads 4
+
+# 4. Reference Mapping & Validation Tracking
+echo "Mapping clean reads to Staphylococcus shinii reference genome..."
+minimap2 -ax map-ont reference.fa barcode02_trimmed.fastq.gz > barcode02_mapped.sam
+
+echo "Sorting and indexing alignment files..."
+samtools view -S -b barcode02_mapped.sam > barcode02_mapped.bam
+samtools sort barcode02_mapped.bam -o barcode02_sorted.bam
+samtools index barcode02_sorted.bam
+
+echo "Pipeline script completed successfully!"
